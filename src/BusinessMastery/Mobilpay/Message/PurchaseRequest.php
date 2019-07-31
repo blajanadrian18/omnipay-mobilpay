@@ -8,6 +8,7 @@ use Omnipay\MobilPay\Api\Invoice;
 use Omnipay\MobilPay\Api\Address;
 use Omnipay\MobilPay\Api\Recurrence;
 use Omnipay\MobilPay\Api\Request\Card;
+use Omnipay\MobilPay\Api\Request\Sms;
 use Omnipay\Common\Message\AbstractRequest;
 use Omnipay\MobilPay\Exception\MissingKeyException;
 
@@ -75,6 +76,40 @@ class PurchaseRequest extends AbstractRequest
     public function setOrderId($value)
     {
         return $this->setParameter('orderId', $value);
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPaymentMethod()
+    {
+        return $this->getParameter('paymentMethod');
+    }
+
+    /**
+     * @param string $value
+     * @return mixed
+     */
+    public function setPaymentMethod($value)
+    {
+        return $this->setParameter('paymentMethod', $value);
+    }
+
+    /**
+     * @return string
+     */
+    public function getService()
+    {
+        return $this->getParameter('service');
+    }
+
+    /**
+     * @param string $value
+     * @return mixed
+     */
+    public function setService($value)
+    {
+        return $this->setParameter('service', $value);
     }
 
     /**
@@ -227,12 +262,31 @@ class PurchaseRequest extends AbstractRequest
 
         $envKey = $envData = null;
         $publicKey = $this->getParameter('publicKey');
+        $paymentMethod = $this->getParameter('paymentMethod');
 
         if (! $publicKey) {
             throw new MissingKeyException("Missing public key path parameter");
         }
+        
+        if (! $paymentMethod) {
+            throw new MissingKeyException("Missing payment method parameter");
+        }
+        
+        $request = null;
+        switch ($paymentMethod) {
+            case 'card':
+                $request = new Card();
+                break;
 
-        $request = new Card();
+            case 'sms':
+                $request = new Sms();
+                $request->service = $this->getParameter('service');
+                break;
+
+            default:
+                break;
+        }
+
         $request->signature  = $this->getMerchantId();
         $request->orderId    = $this->getParameter('orderId');
         $request->confirmUrl = $this->getParameter('confirmUrl');
